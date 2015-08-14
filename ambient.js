@@ -9,11 +9,14 @@ specified light or sound level trigger is met.
 
 var tessel = require('tessel');
 var ambientlib = require('ambient-attx4');
+var camera = require('camera-vc0706').use(tessel.port['A']);
 
 var ambient = ambientlib.use(tessel.port['B']);
 
+var notificationLED = tessel.led[3]; // Set up an LED to notify when we're taking a picture
+
 var lightTriggerValue=0.1;
-var soundTriggerValue=0.1;
+var soundTriggerValue=0.15;
 
 ambient.on('ready', function () {
  // Get points of light and sound data.
@@ -32,7 +35,25 @@ ambient.on('ready', function () {
   // The trigger is a float between 0 and 1
   ambient.on('light-trigger', function(data) {
     console.log("Our light trigger was hit:", data);
+    console.log("Taking Picture");
 
+    notificationLED.high();
+    // Take the picture
+    camera.takePicture(function(err, image) {
+      if (err) {
+        console.log('error taking image', err);
+      } else {
+        notificationLED.low();
+        // Name the image
+        var name = 'picture-' + Math.floor(Date.now()*1000) + '.jpg';
+        // Save the image
+        console.log('Picture saving as', name, '...');
+        process.sendfile(name, image);
+        console.log('done.');
+        // Turn the camera off to end the script
+        camera.disable();
+      }
+    });
     // Clear the trigger so it stops firing
     ambient.clearLightTrigger();
     //After 1.5 seconds reset light trigger
@@ -49,6 +70,25 @@ ambient.on('ready', function () {
 
   ambient.on('sound-trigger', function(data) {
     console.log("Something happened with sound: ", data);
+    console.log("Taking Picture");
+
+    notificationLED.high();
+    // Take the picture
+    camera.takePicture(function(err, image) {
+      if (err) {
+        console.log('error taking image', err);
+      } else {
+        notificationLED.low();
+        // Name the image
+        var name = 'picture-' + Math.floor(Date.now()*1000) + '.jpg';
+        // Save the image
+        console.log('Picture saving as', name, '...');
+        process.sendfile(name, image);
+        console.log('done.');
+        // Turn the camera off to end the script
+        camera.disable();
+      }
+    });
 
     // Clear it
     ambient.clearSoundTrigger();
